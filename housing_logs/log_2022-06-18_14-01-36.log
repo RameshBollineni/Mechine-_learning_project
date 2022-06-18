@@ -1,0 +1,16 @@
+[2022-06-18 14:01:36,075] werkzeug - INFO -  * Running on http://127.0.0.1:5000 (Press CTRL+C to quit)
+[2022-06-18 14:01:48,478] root - INFO - Error occured in scrip: [app.py] at line number: [12] error message: [We are testing custom exception]
+[2022-06-18 14:01:48,478] root - INFO - We are testing logging module
+[2022-06-18 14:01:48,478] app - ERROR - Exception on / [GET]
+Traceback (most recent call last):
+  File "C:\Users\bolli\Project\Mechine-_learning_project\venv\lib\site-packages\flask\app.py", line 2077, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\bolli\Project\Mechine-_learning_project\venv\lib\site-packages\flask\app.py", line 1526, in full_dispatch_request
+    return self.finalize_request(rv)
+  File "C:\Users\bolli\Project\Mechine-_learning_project\venv\lib\site-packages\flask\app.py", line 1545, in finalize_request
+    response = self.make_response(rv)
+  File "C:\Users\bolli\Project\Mechine-_learning_project\venv\lib\site-packages\flask\app.py", line 1702, in make_response
+    f"The view function for {request.endpoint!r} did not"
+TypeError: The view function for 'hello' did not return a valid response. The function either returned None or ended without a return statement.
+[2022-06-18 14:01:48,481] werkzeug - INFO - 127.0.0.1 - - [18/Jun/2022 14:01:48] "[35m[1mGET / HTTP/1.1[0m" 500 -
+[2022-06-18 14:01:48,533] werkzeug - INFO - 127.0.0.1 - - [18/Jun/2022 14:01:48] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -

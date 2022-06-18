@@ -5,7 +5,7 @@ from housing.expection import HousingException
 app = Flask(__name__)
 
 @app.route("/",methods=['GET','POST'])
-def index():
+def hello():
     try:
         raise Exception("We are testing custom exception")
     except Exception as e:
@@ -14,4 +14,4 @@ def index():
         logging.info("We are testing logging module")
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
