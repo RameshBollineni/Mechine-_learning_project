@@ -1,0 +1,9 @@
+[2022-06-19 14:42:56,561] werkzeug - INFO -  * Running on http://127.0.0.1:5000 (Press CTRL+C to quit)
+[2022-06-19 14:43:30,341] root - INFO - Error occured in scrip: [app.py] at line number: [13] error message: [We are testing custom exception]
+[2022-06-19 14:43:30,341] root - INFO - We are testing logging module
+[2022-06-19 14:43:30,342] werkzeug - INFO - 127.0.0.1 - - [19/Jun/2022 14:43:30] "GET / HTTP/1.1" 200 -
+[2022-06-19 14:43:30,382] werkzeug - INFO - 127.0.0.1 - - [19/Jun/2022 14:43:30] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+[2022-06-19 14:45:33,942] root - INFO - Error occured in scrip: [app.py] at line number: [13] error message: [We are testing custom exception]
+[2022-06-19 14:45:33,942] root - INFO - We are testing logging module
+[2022-06-19 14:45:33,944] werkzeug - INFO - 127.0.0.1 - - [19/Jun/2022 14:45:33] "GET / HTTP/1.1" 200 -
+[2022-06-19 14:45:33,982] werkzeug - INFO - 127.0.0.1 - - [19/Jun/2022 14:45:33] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
