@@ -65,7 +65,9 @@ We have to create folder .github
 
 Within .github folder we need to create one more folder workflows 
 
-In the workflows folder we need to create one yaml file line main.yaml file  
+In the workflows folder we need to create one yaml file line main.yaml file 
+
+pip install Pyyaml  
 
 
 
