@@ -3,7 +3,7 @@ ModelTrainerConfig,ModelEvaluationConfig,ModelPusherConfig,TrainingPipelineConfi
 from housing.util.util import read_yaml_file
 from housing.logger import logging
 import sys,os
-from housing.constant import * 
+from housing.constant import *
 from housing.exception import HousingException
 
 
@@ -19,6 +19,7 @@ class Configuartion:
             self.time_stamp = current_time_stamp
         except Exception as e:
             raise HousingException(e,sys) from e
+
 
     def get_data_ingestion_config(self) ->DataIngestionConfig:
         try:
