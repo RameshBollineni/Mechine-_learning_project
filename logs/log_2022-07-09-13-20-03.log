@@ -1,0 +1,4 @@
+[2022-07-09 13:20:40,178]^;INFO^;225^;configuration.py^;get_training_pipeline_config()^;Training pipleine config: TrainingPipelineConfig(artifact_dir='C:\\Users\\bolli\\Project\\Mechine-_learning_project\\housing\\artifact')
+[2022-07-09 13:20:40,261]^;INFO^;224^;_internal.py^;_log()^; * Running on http://127.0.0.1:5000 (Press CTRL+C to quit)
+[2022-07-09 13:22:08,777]^;INFO^;224^;_internal.py^;_log()^;127.0.0.1 - - [09/Jul/2022 13:22:08] "GET / HTTP/1.1" 200 -
+[2022-07-09 13:22:08,832]^;INFO^;224^;_internal.py^;_log()^;127.0.0.1 - - [09/Jul/2022 13:22:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
