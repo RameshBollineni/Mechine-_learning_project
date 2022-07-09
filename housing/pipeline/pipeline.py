@@ -1,214 +1,228 @@
-from collections import namedtuple
-from datetime import datetime
-import uuid
-from housing.config.configuration import Configuartion
-from housing.logger import logging,get_log_file_name
+from housing.entity.config_entity import DataIngestionConfig, DataTransformationConfig,DataValidationConfig,   \
+ModelTrainerConfig,ModelEvaluationConfig,ModelPusherConfig,TrainingPipelineConfig
+from housing.util.util import read_yaml_file
+from housing.logger import logging
+import sys,os
+from housing.constant import *
 from housing.exception import HousingException
-from threading import Thread
-from typing import List
-
-from multiprocessing import Process
-from housing.entity.artifact_entity import ModelPusherArtifact, DataIngestionArtifact,ModelEvaluationArtifact
-from housing.entity.artifact_entity import DataValidationArtifact, DataTransformationArtifact, ModelTrainerArtifact
-from housing.entity.config_entity import DataIngestionConfig,ModelEvaluationConfig
-from housing.component.data_ingestion import DataIngestion
-from housing.component.data_validation import DataValidation
-from housing.component.data_transformation import DataTransformation
-from housing.component.model_trainer import ModelTrainer
-from housing.component.model_evaluation import ModelEvaluation
-from housing.component.model_pusher import ModelPusher
-import os, sys
-from collections import namedtuple
-from datetime import datetime
-import pandas  as pd
-from housing.constant import EXPERIMENT_DIR_NAME, EXPERIMENT_FILE_NAME
-Experiment = namedtuple("Experiment",["experiment_id","initialization_timestamp","artifact_time_stamp",
-"running_status","start_time","stop_time","execution_time","message","experiment_file_path","accuracy","is_model_accepted"])
 
 
-config = Configuartion()
-os.makedirs(config.training_pipeline_config.artifact_dir,exist_ok=True)
+class Configuartion:
 
-
-class Pipeline(Thread):
-    
-    experiment:Experiment=Experiment(*([None]*11))
-   
-    experiment_file_path = os.path.join(config.training_pipeline_config.artifact_dir,
-    EXPERIMENT_DIR_NAME,EXPERIMENT_FILE_NAME)
-
-
-    def __init__(self, config: Configuartion = config) -> None:
+    def __init__(self,
+        config_file_path:str =CONFIG_FILE_PATH,
+        current_time_stamp:str = CURRENT_TIME_STAMP
+        ) -> None:
         try:
-            super().__init__(daemon=False, name="pipeline")
-            self.config = config
-        except Exception as e:
-            raise HousingException(e, sys) from e
-
-    def start_data_ingestion(self) -> DataIngestionArtifact:
-        try:
-            data_ingestion = DataIngestion(data_ingestion_config=self.config.get_data_ingestion_config())
-            return data_ingestion.initiate_data_ingestion()
-        except Exception as e:
-            raise HousingException(e, sys) from e
-
-    def start_data_validation(self, data_ingestion_artifact: DataIngestionArtifact) \
-            -> DataValidationArtifact:
-        try:
-            data_validation = DataValidation(data_validation_config=self.config.get_data_validation_config(),
-                                             data_ingestion_artifact=data_ingestion_artifact
-                                             )
-            return data_validation.initiate_data_validation()
-        except Exception as e:
-            raise HousingException(e, sys) from e
-
-    def start_data_transformation(self,
-                                  data_ingestion_artifact: DataIngestionArtifact,
-                                  data_validation_artifact: DataValidationArtifact
-                                  ) -> DataTransformationArtifact:
-        try:
-            data_transformation = DataTransformation(
-                data_transformation_config=self.config.get_data_transformation_config(),
-                data_ingestion_artifact=data_ingestion_artifact,
-                data_validation_artifact=data_validation_artifact
-            )
-            return data_transformation.initiate_data_transformation()
-        except Exception as e:
-            raise HousingException(e, sys)
-
-    def start_model_trainer(self,data_transformation_artifact:DataTransformationArtifact)->ModelTrainerArtifact:
-        try:
-            model_trainer = ModelTrainer(model_trainer_config=self.config.get_model_trainer_config(),
-            data_transformation_artifact=data_transformation_artifact
-            )
-            return model_trainer.initiate_model_trainer()
+            self.config_info  = read_yaml_file(file_path=config_file_path)
+            self.training_pipeline_config = self.get_training_pipeline_config()
+            self.time_stamp = current_time_stamp
         except Exception as e:
             raise HousingException(e,sys) from e
 
-    def start_model_evaluation(self, data_ingestion_artifact: DataIngestionArtifact,
-            data_validation_artifact: DataValidationArtifact,
-            model_trainer_artifact: ModelTrainerArtifact)->ModelEvaluationArtifact:
-        try:
-            model_eval = ModelEvaluation(
-                model_evaluation_config=self.config.get_model_evaluation_config(),
-                data_ingestion_artifact=data_ingestion_artifact,
-                data_validation_artifact=data_validation_artifact,
-                model_trainer_artifact=model_trainer_artifact)
-            return model_eval.initiate_model_evaluation()
-        except Exception as e:
-            raise HousingException(e, sys) from e
 
-    def start_model_pusher(self,model_eval_artifact: ModelEvaluationArtifact) -> ModelPusherArtifact:
+    def get_data_ingestion_config(self) ->DataIngestionConfig:
         try:
-            model_pusher = ModelPusher(
-                model_pusher_config=self.config.get_model_pusher_config(),
-                model_evaluation_artifact=model_eval_artifact
+            artifact_dir = self.training_pipeline_config.artifact_dir
+            data_ingestion_artifact_dir=os.path.join(
+                artifact_dir,
+                DATA_INGESTION_ARTIFACT_DIR,
+                self.time_stamp
             )
-            return model_pusher.initiate_model_pusher()
+            data_ingestion_info = self.config_info[DATA_INGESTION_CONFIG_KEY]
+            
+            dataset_download_url = data_ingestion_info[DATA_INGESTION_DOWNLOAD_URL_KEY]
+            tgz_download_dir = os.path.join(
+                data_ingestion_artifact_dir,
+                data_ingestion_info[DATA_INGESTION_TGZ_DOWNLOAD_DIR_KEY]
+            )
+            raw_data_dir = os.path.join(data_ingestion_artifact_dir,
+            data_ingestion_info[DATA_INGESTION_RAW_DATA_DIR_KEY]
+            )
+
+            ingested_data_dir = os.path.join(
+                data_ingestion_artifact_dir,
+                data_ingestion_info[DATA_INGESTION_INGESTED_DIR_NAME_KEY]
+            )
+            ingested_train_dir = os.path.join(
+                ingested_data_dir,
+                data_ingestion_info[DATA_INGESTION_TRAIN_DIR_KEY]
+            )
+            ingested_test_dir =os.path.join(
+                ingested_data_dir,
+                data_ingestion_info[DATA_INGESTION_TEST_DIR_KEY]
+            )
+
+
+            data_ingestion_config=DataIngestionConfig(
+                dataset_download_url=dataset_download_url, 
+                tgz_download_dir=tgz_download_dir, 
+                raw_data_dir=raw_data_dir, 
+                ingested_train_dir=ingested_train_dir, 
+                ingested_test_dir=ingested_test_dir
+            )
+            logging.info(f"Data Ingestion config: {data_ingestion_config}")
+            return data_ingestion_config
         except Exception as e:
-            raise HousingException(e, sys) from e
+            raise HousingException(e,sys) from e
 
-    def run_pipeline(self):
+    def get_data_validation_config(self) -> DataValidationConfig:
         try:
-            if Pipeline.experiment.running_status:
-                logging.info("Pipeline is already running")
-                return Pipeline.experiment
-            # data ingestion
-            logging.info("Pipeline starting.")
+            artifact_dir = self.training_pipeline_config.artifact_dir
 
-            experiment_id=str(uuid.uuid4())
+            data_validation_artifact_dir=os.path.join(
+                artifact_dir,
+                DATA_VALIDATION_ARTIFACT_DIR_NAME,
+                self.time_stamp
+            )
+            data_validation_config = self.config_info[DATA_VALIDATION_CONFIG_KEY]
+
+
+            schema_file_path = os.path.join(ROOT_DIR,
+            data_validation_config[DATA_VALIDATION_SCHEMA_DIR_KEY],
+            data_validation_config[DATA_VALIDATION_SCHEMA_FILE_NAME_KEY]
+            )
+
+            report_file_path = os.path.join(data_validation_artifact_dir,
+            data_validation_config[DATA_VALIDATION_REPORT_FILE_NAME_KEY]
+            )
+
+            report_page_file_path = os.path.join(data_validation_artifact_dir,
+            data_validation_config[DATA_VALIDATION_REPORT_PAGE_FILE_NAME_KEY]
+
+            )
+
+            data_validation_config = DataValidationConfig(
+                schema_file_path=schema_file_path,
+                report_file_path=report_file_path,
+                report_page_file_path=report_page_file_path,
+            )
+            return data_validation_config
+        except Exception as e:
+            raise HousingException(e,sys) from e
+
+    def get_data_transformation_config(self) -> DataTransformationConfig:
+        try:
+            artifact_dir = self.training_pipeline_config.artifact_dir
+
+            data_transformation_artifact_dir=os.path.join(
+                artifact_dir,
+                DATA_TRANSFORMATION_ARTIFACT_DIR,
+                self.time_stamp
+            )
+
+            data_transformation_config_info=self.config_info[DATA_TRANSFORMATION_CONFIG_KEY]
+
+            add_bedroom_per_room=data_transformation_config_info[DATA_TRANSFORMATION_ADD_BEDROOM_PER_ROOM_KEY]
+
+
+            preprocessed_object_file_path = os.path.join(
+                data_transformation_artifact_dir,
+                data_transformation_config_info[DATA_TRANSFORMATION_PREPROCESSING_DIR_KEY],
+                data_transformation_config_info[DATA_TRANSFORMATION_PREPROCESSED_FILE_NAME_KEY]
+            )
 
             
-            Pipeline.experiment = Experiment(experiment_id=experiment_id,
-            initialization_timestamp=self.config.time_stamp,
-            artifact_time_stamp=self.config.time_stamp,
-            running_status=True,
-            start_time=datetime.now(),
-            stop_time=None,
-            execution_time=None,
-            experiment_file_path=Pipeline.experiment_file_path,
-            is_model_accepted=None,
-            message="Pipeline has been started.",
-            accuracy=None,
+            transformed_train_dir=os.path.join(
+            data_transformation_artifact_dir,
+            data_transformation_config_info[DATA_TRANSFORMATION_DIR_NAME_KEY],
+            data_transformation_config_info[DATA_TRANSFORMATION_TRAIN_DIR_NAME_KEY]
             )
-            logging.info(f"Pipeline experiment: {Pipeline.experiment}")
 
-            self.save_experiment()
 
-            data_ingestion_artifact = self.start_data_ingestion()
-            data_validation_artifact = self.start_data_validation(data_ingestion_artifact=data_ingestion_artifact)
-            data_transformation_artifact = self.start_data_transformation(
-                data_ingestion_artifact=data_ingestion_artifact,
-                data_validation_artifact=data_validation_artifact
+            transformed_test_dir = os.path.join(
+            data_transformation_artifact_dir,
+            data_transformation_config_info[DATA_TRANSFORMATION_DIR_NAME_KEY],
+            data_transformation_config_info[DATA_TRANSFORMATION_TEST_DIR_NAME_KEY]
+
             )
-            model_trainer_artifact=self.start_model_trainer(data_transformation_artifact=data_transformation_artifact)
-
-            model_evaluation_artifact = self.start_model_evaluation(data_ingestion_artifact=data_ingestion_artifact,
-                                                                    data_validation_artifact=data_validation_artifact,
-                                                                    model_trainer_artifact=model_trainer_artifact)
-
-            if model_evaluation_artifact.is_model_accepted:
-                model_pusher_artifact = self.start_model_pusher(model_eval_artifact=model_evaluation_artifact)
-                logging.info(f'Model pusher artifact: {model_pusher_artifact}')
-            else:
-                logging.info("Trained model rejected.")
-            logging.info("Pipeline completed.")
             
 
-            stop_time= datetime.now()
-            Pipeline.experiment = Experiment(experiment_id=Pipeline.experiment.experiment_id,
-            initialization_timestamp=self.config.time_stamp,
-            artifact_time_stamp=self.config.time_stamp,
-            running_status=False,
-            start_time=Pipeline.experiment.start_time,
-            stop_time=stop_time,
-            execution_time=stop_time-Pipeline.experiment.start_time,
-            message="Pipeline has been completed.",
-            experiment_file_path=Pipeline.experiment_file_path,
-            is_model_accepted=model_evaluation_artifact.is_model_accepted,
-            accuracy=model_trainer_artifact.model_accuracy
+            data_transformation_config=DataTransformationConfig(
+                add_bedroom_per_room=add_bedroom_per_room,
+                preprocessed_object_file_path=preprocessed_object_file_path,
+                transformed_train_dir=transformed_train_dir,
+                transformed_test_dir=transformed_test_dir
             )
-            logging.info(f"Pipeline experiment: {Pipeline.experiment}")
-            self.save_experiment()
-        except Exception as e:
-            raise HousingException(e, sys) from e
 
-    def run(self):
-        try:
-            self.run_pipeline()
+            logging.info(f"Data transformation config: {data_transformation_config}")
+            return data_transformation_config
         except Exception as e:
-            raise e
+            raise HousingException(e,sys) from e
 
-    def save_experiment(self):
+    def get_model_trainer_config(self) -> ModelTrainerConfig:
         try:
-            if Pipeline.experiment.experiment_id is not None:
-                experiment = Pipeline.experiment
-                experiment_dict = experiment._asdict()
-                experiment_dict:dict = { key:[value] for key,value in experiment_dict.items() }
-                
-                experiment_dict.update({ 
-                    "created_time_stamp":[datetime.now()],
-                    "experiment_file_path":[os.path.basename(Pipeline.experiment.experiment_file_path)]})
-                
-                experiment_report = pd.DataFrame(experiment_dict)
+            artifact_dir = self.training_pipeline_config.artifact_dir
 
-                os.makedirs(os.path.dirname(Pipeline.experiment_file_path),exist_ok=True)
-                if os.path.exists(Pipeline.experiment_file_path):
-                    experiment_report.to_csv(Pipeline.experiment_file_path,index=False,header=False,mode="a")
-                else:
-                    experiment_report.to_csv(Pipeline.experiment_file_path,mode="w",index=False,header=True)
-            else:
-                print("First start experiment")
+            model_trainer_artifact_dir=os.path.join(
+                artifact_dir,
+                MODEL_TRAINER_ARTIFACT_DIR,
+                self.time_stamp
+            )
+            model_trainer_config_info = self.config_info[MODEL_TRAINER_CONFIG_KEY]
+            trained_model_file_path = os.path.join(model_trainer_artifact_dir,
+            model_trainer_config_info[MODEL_TRAINER_TRAINED_MODEL_DIR_KEY],
+            model_trainer_config_info[MODEL_TRAINER_TRAINED_MODEL_FILE_NAME_KEY]
+            )
+
+            model_config_file_path = os.path.join(model_trainer_config_info[MODEL_TRAINER_MODEL_CONFIG_DIR_KEY],
+            model_trainer_config_info[MODEL_TRAINER_MODEL_CONFIG_FILE_NAME_KEY]
+            )
+
+            base_accuracy = model_trainer_config_info[MODEL_TRAINER_BASE_ACCURACY_KEY]
+
+            model_trainer_config = ModelTrainerConfig(
+                trained_model_file_path=trained_model_file_path,
+                base_accuracy=base_accuracy,
+                model_config_file_path=model_config_file_path
+            )
+            logging.info(f"Model trainer config: {model_trainer_config}")
+            return model_trainer_config
         except Exception as e:
-            raise HousingException(e,sys) from e    
-    @classmethod
-    def get_experiments_status(cls,limit:int=5)->pd.DataFrame:
+            raise HousingException(e,sys) from e
+
+    def get_model_evaluation_config(self) ->ModelEvaluationConfig:
         try:
-            if os.path.exists(Pipeline.experiment_file_path):
-                df= pd.read_csv(Pipeline.experiment_file_path)
-                limit=-1*int(limit)
-                return  df[limit:].drop(columns=["experiment_file_path","initialization_timestamp"],axis=1)
-            else:
-                return pd.DataFrame()
+            model_evaluation_config = self.config_info[MODEL_EVALUATION_CONFIG_KEY]
+            artifact_dir = os.path.join(self.training_pipeline_config.artifact_dir,
+                                        MODEL_EVALUATION_ARTIFACT_DIR, )
+
+            model_evaluation_file_path = os.path.join(artifact_dir,
+                                                    model_evaluation_config[MODEL_EVALUATION_FILE_NAME_KEY])
+            response = ModelEvaluationConfig(model_evaluation_file_path=model_evaluation_file_path,
+                                            time_stamp=self.time_stamp)
+            
+            
+            logging.info(f"Model Evaluation Config: {response}.")
+            return response
+        except Exception as e:
+            raise HousingException(e,sys) from e
+
+
+    def get_model_pusher_config(self) -> ModelPusherConfig:
+        try:
+            time_stamp = f"{datetime.now().strftime('%Y%m%d%H%M%S')}"
+            model_pusher_config_info = self.config_info[MODEL_PUSHER_CONFIG_KEY]
+            export_dir_path = os.path.join(ROOT_DIR, model_pusher_config_info[MODEL_PUSHER_MODEL_EXPORT_DIR_KEY],
+                                           time_stamp)
+
+            model_pusher_config = ModelPusherConfig(export_dir_path=export_dir_path)
+            logging.info(f"Model pusher config {model_pusher_config}")
+            return model_pusher_config
+
+        except Exception as e:
+            raise HousingException(e,sys) from e
+
+    def get_training_pipeline_config(self) ->TrainingPipelineConfig:
+        try:
+            training_pipeline_config = self.config_info[TRAINING_PIPELINE_CONFIG_KEY]
+            artifact_dir = os.path.join(ROOT_DIR,
+            training_pipeline_config[TRAINING_PIPELINE_NAME_KEY],
+            training_pipeline_config[TRAINING_PIPELINE_ARTIFACT_DIR_KEY]
+            )
+
+            training_pipeline_config = TrainingPipelineConfig(artifact_dir=artifact_dir)
+            logging.info(f"Training pipleine config: {training_pipeline_config}")
+            return training_pipeline_config
         except Exception as e:
             raise HousingException(e,sys) from e
