@@ -1,75 +1,58 @@
-# Mechine-_learning_project
-This is first ml project
+Creating conda environment
 
+conda create -p venv python==3.7 -y
+conda activate venv/
+OR
 
-creating vitual env commend
+conda activate venv
+pip install -r requirements.txt
+To Add files to git
 
-conda create -p venv python==3.7 -y 
-Here -p means virtual  enivironmrnt will create same project folder. If we keep -n venv will create in anaconda folder.
+git add .
+OR
 
-How to activate conda env
-conda activate venv/--CMD 
+git add <file_name>
+Note: To ignore file or folder from git we can write name of file/folder in .gitignore file
 
-how to create requirements.txt file --> pip install -r requirements.txt
+To check the git status
 
-addig files in git repository 
+git status
+To check all version maintained by git
 
-git status --> when we excute the this command we can see whcih files are not tracked or the files are not updated in git rep 
+git log
+To create version/commit all changes by git
 
-git add filename,filenam1,---filenamen
+git commit -m "message"
+To send version/changes to github
 
-git add . ---> it will add all files at a time 
+git push origin main
+To check remote url
 
-git remove filename ---> it will remove file git rep
+git remote -v
+To setup CI/CD pipeline in heroku we need 3 information
 
-git commit --- > This create version in git rep 
+HEROKU_EMAIL = anishyadav7045075175@gmail.com
+HEROKU_API_KEY = <>
+HEROKU_APP_NAME = ml-regression-app
+BUILD DOCKER IMAGE
 
-git log--> it will show you the previous version 
+docker build -t <image_name>:<tagname> .
+Note: Image name for docker must be lowercase
 
-to send chnages to git ---> git push origin main 
+To list docker image
 
-to check remote url --> git remote -v 
+docker images
+Run docker image
 
-how to find branch --> git branch 
+docker run -p 5000:5000 -e PORT=5000 f8c749e73678
+To check running container in docker
 
-To setup cicd pipeline we need three information 
-Heroku Email id=bollineniramesh.informatica@gmail.com
-Heroku API key: d827328b-b49c-4da1-8646-9baebad37123
-Heroku APP name= ml_regresion_app
+docker ps
+Tos stop docker conatiner
 
-How to create Docker file.
+docker stop <container_id>
+python setup.py install
+Install ipykernel
 
-right click the project create file 
-We nned to keep this instrucations in Docker file 
-
-FROM python:3.7
-COPY . /app  Here . indicates current directory 
-WORKDIR /app
-RUN pip install -r requirements.txt
-EXPOSE $PORT 
-CMD gunicorn --workers=4 --bind 0.0.0.0:$PORT app:app
-
-How to check docker version ---> docker --version 
-
-BUILD docker img---> docker build -t <img name>:<tagname> . --> .Means location of the file 
-
-To list docker images ---> docker images 
-
-To run the docker image ---> docker run -p 5000:5000 -e PORT=5000 imageid [Here imageid we can see from above comand ]
-
-To check running continers in docker ---> docker ps 
-
-To stop any continer --> docker stop continerid
-
-We have to create folder .github 
-
-Within .github folder we need to create one more folder workflows 
-
-In the workflows folder we need to create one yaml file line main.yaml file 
-
-pip install Pyyaml  
-
-
-
-
-
+pip install ipykernel
+Data Drift: When your datset stats gets change we call it as data drift
